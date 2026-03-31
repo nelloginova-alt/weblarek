@@ -98,3 +98,158 @@ Presenter - презентер содержит основную логику п
 `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
 
+##### Данные
+interface IProduct {
+  id: string;
+  description: string;
+  image: string;
+  title: string;
+  category: string;
+  price: number | null;
+}
+
+type TPayment = 'card' | 'cash' | ''
+
+interface IBuyer {
+  payment: TPayment;
+  email: string;
+  phone: string;
+  address: string;
+}
+
+type TValidationErrors = Partial<Record<keyof IBuyer, string>>
+
+###### Модели данных
+class ProductCatalog {
+  private _products: IProduct[] = [];
+  private _productDetails: IProduct | null;
+  
+  setProducts(products: IProduct[]): void {
+    this._products = [...products];
+  }
+
+  getProducts(): IProduct[] {
+    return [...this._products];
+  }
+
+  getProductById(id: string): IProduct | underfind {
+    return this._products.find((product) => product.id === id);
+  }
+
+  setProductsDetails(product: IProduct): void {
+    this._productDetails = product;
+  }
+
+  getProductsDetails(): IProduct | null {
+    return this._productDetails;
+  }
+} 
+
+class ProductBasket {
+  private _productsSelected: IProduct[] = [];
+  
+  getProductsSelected(): IProduct[] {
+    return [...this._productsSelected];
+  }
+
+  addProductSelected(product: IPoduct): void {
+    if(!this.hasProductSelected(product.id)) {
+      this._productSelected.push(product);
+    }
+  }
+
+  removeProductSelected(productId: string): void {
+    this._productsSelected = this._productsSelected.filter(productSelected => productSelected.id !== productId);
+  }
+
+  clear(): void {
+    this._productsSelected = [];
+  }
+
+  getTotalPrice(): number {
+    return this._productsSelected.reduce((sum, productSelected) => {
+      return sum + (productSelected.price ?? 0);
+    }, 0);
+  }
+
+  getTotalItems(): number {
+    this._productsSelected.lenght;
+  }
+
+  hasProductSelected(productId: string): boolean {
+    return this._productsSelected.some((item) => item.id === productId);
+  }
+}
+
+class BuyerDetails {
+  private _payment: TPayment;
+  private _address: string;
+  private _phone: string;
+  private _email: string;
+
+  updateData(data: Partial<IBuyer>): void {
+    if (data.payment !== undefined) this._payment = data.payment;
+    if (data.address !== undefined) this._address = data.address;
+    if (data.phone !== undefined) this._phone = data.phone;
+    if (data.email !== undefined) this._email = data.email;
+  }
+    
+  getData(): IBuyer {
+    return {
+      payment: this._payment as TPayment,
+      address: this._address,
+      phone: this._phone,
+        email: this._email,
+    };
+  }
+    
+  clear(): void {
+    this._payment = null;
+    this._address = '';
+    this._phone = '';
+    this._email = '';
+  }
+
+  validate(): string {
+    const errors: string = {};
+        
+      if (!this._payment) {
+        errors.payment = 'Не выбран вид оплаты';
+      }
+        
+      if (!this._address.trim()) {
+        errors.address = 'Укажите адрес доставки';
+      }
+        
+      if (!this._phone.trim()) {
+        errors.phone = 'Укажите номер телефона';
+      }
+        
+      if (!this._email.trim()) {
+        errors.email = 'Укажите емэйл';
+      }
+        
+      return errors;
+    }
+}
+
+###### Слой коммуникации
+Он будет отвечать за получение данных с сервера и отправку данных на сервер.
+
+class DataApi {
+  private _api: Api;
+
+  constructor(api: Api) {
+    this._api = api;
+  }
+
+  getProducts(): Promise<IProductRequest> {
+    return this._api.get<IProductRequest>('/product');
+  }
+
+  postOrder(order: IOrderRequest): Promise<IOrderResponse> {
+    return this._api.post<IOrderResponse>('/order', order);
+  }
+}
+
+https://github.com/nelloginova-alt/weblarek
