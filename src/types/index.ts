@@ -25,16 +25,12 @@ export interface IBuyer {
 
 export type TValidationErrors = Partial<Record<keyof IBuyer, string>>;
 
-export interface IProductRequest {
+export interface IProductResponse {
   total: number;
   items: IProduct[];
 }
 
-export interface IOrderRequest {
-  payment: TPayment;
-  email: string;
-  phone: string;
-  address: string;
+export interface IOrderRequest extends IBuyer {
   items: string[];
   total: number;
 }

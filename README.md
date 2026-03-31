@@ -99,157 +99,82 @@ Presenter - презентер содержит основную логику п
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
 
 ##### Данные
-interface IProduct {
-  id: string;
-  description: string;
-  image: string;
-  title: string;
-  category: string;
-  price: number | null;
-}
+interface IProduct описывает структуру товара.
+Поля:
+  id - уникальные идентификатор продукта;
+  description - описание товара;
+  image - изображение товара;
+  title - название товара;
+  category - категория товара;
+  price - цена товара, если null — цена не указана.
 
-type TPayment = 'card' | 'cash' | ''
+type TPayment - тип оплаты
+  'card' - оплата картой;
+  'cash' - оплата наличными;
+  '' - платеж не выбран, по умолчанию
 
-interface IBuyer {
-  payment: TPayment;
-  email: string;
-  phone: string;
-  address: string;
-}
+interface IBuyer описывает данные покупателя.
+Поля:
+  payment - способ оплаты;
+  email - электронная почта покупателя;
+  phone - мобильный номер телефона покупателя;
+  address - адрес доставки.
 
-type TValidationErrors = Partial<Record<keyof IBuyer, string>>
+type TValidationErrors - хранение текстов ошибок валидации формы заказа.
 
 ###### Модели данных
-class ProductCatalog {
-  private _products: IProduct[] = [];
-  private _productDetails: IProduct | null;
-  
-  setProducts(products: IProduct[]): void {
-    this._products = [...products];
-  }
+ProductCatalog - класс, который управляет каталогом товаров. Отвечает за хранение, получение и поиск товаров, позволяет выбрать товар для детального онакомления с ним.
 
-  getProducts(): IProduct[] {
-    return [...this._products];
-  }
+Поля класса:
+  private products: IProduct[] - приватное поле, хранящее массив всех товаров;
+  private productDetails: IProduct | null - приватное поле, хранит детальную информацию о выбранном товаре.
 
-  getProductById(id: string): IProduct | underfind {
-    return this._products.find((product) => product.id === id);
-  }
+Методы класса:
+  setProducts(products: IProduct[]): void - сохраняет массив товаров, полученный с сервера. 
+  getProducts(): IProduct - возвращает копию массива всех товаров.
+  getProductById(id: string): IProduct | underfind - поиск товара по уникальному идентификатору, добавлении товара в корзину и для получения детальной информации.
+  setProductsDetails(product: IProduct): void - сохраняет товар для открытии модального окна с детальным описанием товара.
+  getProductsDetails(): IProduct | null - возвращает текущий выбранный товар для просмотра.
 
-  setProductsDetails(product: IProduct): void {
-    this._productDetails = product;
-  }
+ProductBasket -  класс, который отвечает за управление корзиной покупок. Он хранит выбранные покупателем товары, позволяет удалить товар из списка, подсчет общей стоимости и количества товаров, проверяет наличие товара в корзине.
 
-  getProductsDetails(): IProduct | null {
-    return this._productDetails;
-  }
-} 
+Поля класса:
+  private productsSelected: IProduct[] - приватное поле, хранящее массив товаров, добавленные покупателем в корзину.
 
-class ProductBasket {
-  private _productsSelected: IProduct[] = [];
-  
-  getProductsSelected(): IProduct[] {
-    return [...this._productsSelected];
-  }
+Методы класса: 
+  getProductsSelected(): IProduct[] - возвращает копию массива товаров для отображения списка товаров в корзине.
+  addProductSelected(product: IPoduct): void - добавляет товар в корзину.
+  removeProductSelected(productId: string): void - удаляет товар из корзины по его идентификатору.
+  clear(): void - полностью удаляет все товары из корзины.
+  getTotalPrice(): number - вычисляет общую стоимость всех товаров в корзине.
+  getTotalItems(): number - возвращает количество товаров в корзине.
+  hasProductSelected(productId: string): boolean - проверяет наличие товара в корзине по его идентификатору.
 
-  addProductSelected(product: IPoduct): void {
-    if(!this.hasProductSelected(product.id)) {
-      this._productSelected.push(product);
-    }
-  }
+BuyerDetails - класс, который отвечает за хранение и валидацию данных покупателя при оформлении заказа.
 
-  removeProductSelected(productId: string): void {
-    this._productsSelected = this._productsSelected.filter(productSelected => productSelected.id !== productId);
-  }
+Поля класса:
+  private payment: TPayment - приватное поле, хранящее выбранный способ оплаты.
+  private address: string - приватное поле, хранящее адрес доставки.
+  private phone: string - приватное поле, хранящее мобильный номер телефона покупателя.
+  private email: string -  приватное поле, хранящее адрес электронной почты покупателя.
 
-  clear(): void {
-    this._productsSelected = [];
-  }
-
-  getTotalPrice(): number {
-    return this._productsSelected.reduce((sum, productSelected) => {
-      return sum + (productSelected.price ?? 0);
-    }, 0);
-  }
-
-  getTotalItems(): number {
-    this._productsSelected.lenght;
-  }
-
-  hasProductSelected(productId: string): boolean {
-    return this._productsSelected.some((item) => item.id === productId);
-  }
-}
-
-class BuyerDetails {
-  private _payment: TPayment;
-  private _address: string;
-  private _phone: string;
-  private _email: string;
-
-  updateData(data: Partial<IBuyer>): void {
-    if (data.payment !== undefined) this._payment = data.payment;
-    if (data.address !== undefined) this._address = data.address;
-    if (data.phone !== undefined) this._phone = data.phone;
-    if (data.email !== undefined) this._email = data.email;
-  }
-    
-  getData(): IBuyer {
-    return {
-      payment: this._payment as TPayment,
-      address: this._address,
-      phone: this._phone,
-        email: this._email,
-    };
-  }
-    
-  clear(): void {
-    this._payment = null;
-    this._address = '';
-    this._phone = '';
-    this._email = '';
-  }
-
-  validate(): string {
-    const errors: string = {};
-        
-      if (!this._payment) {
-        errors.payment = 'Не выбран вид оплаты';
-      }
-        
-      if (!this._address.trim()) {
-        errors.address = 'Укажите адрес доставки';
-      }
-        
-      if (!this._phone.trim()) {
-        errors.phone = 'Укажите номер телефона';
-      }
-        
-      if (!this._email.trim()) {
-        errors.email = 'Укажите емэйл';
-      }
-        
-      return errors;
-    }
-}
+Методы класса:
+  updateData(data: Partial<IBuyer>): void - обновляет данные о покупатели.
+  getData(): IBuyer - возвращает данные покупателя для отправки заказа.
+  clear(): void - очищает все поля информации о покупатели.
+  validate(): string - выполняет валидацию данных
 
 ###### Слой коммуникации
-Он будет отвечать за получение данных с сервера и отправку данных на сервер.
+DataApi - класс, который отвечает за взаимодействие с сервером (API). Он обеспечивает получение данных о товарах и отправку данных о заказе.
 
-class DataApi {
-  private _api: Api;
+Поля класса:
+  private api: Api - приватное поле, хранящее экземпляр базового класса Api.
 
-  constructor(api: Api) {
-    this._api = api;
-  }
+Конструктор:
+  constructor(api: Api) - экземпляр базового класса Api, который предоставляет методы для выполнения HTTP-запросов (GET, POST).
 
-  getProducts(): Promise<IProductRequest> {
-    return this._api.get<IProductRequest>('/product');
-  }
-
-  postOrder(order: IOrderRequest): Promise<IOrderResponse> {
-    return this._api.post<IOrderResponse>('/order', order);
-  }
-}
+Методы класса: 
+  getProducts(): Promise<IProductRequest> - выполняет GET-запрос к эндпоинту /product для получения списка всех доступных товаров. Возвращает промис, который содержит массив товаров.
+  postOrder(order: IOrderRequest): Promise<IOrderResponse> - выполняет POST-запрос к эндпоинту /order для отправки данных оформленного заказа на сервер. Принимает объект заказа, содержащий информацию о товарах, способе оплаты, адресе доставки и контактных данных покупателя. Возвращает промис, который содержит идентификатор созданного заказа и итоговой суммой.
 
 https://github.com/nelloginova-alt/weblarek
