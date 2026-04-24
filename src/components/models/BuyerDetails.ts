@@ -30,7 +30,6 @@ export class BuyerDetails {
     }
     if(hasChanges) {
       this.events.emit('buyer:updated', this.getData());
-      this.validate();
     }
   }
     
@@ -49,6 +48,7 @@ export class BuyerDetails {
     this.phone = '';
     this.email = '';
     this.events.emit('buyer:cleared');
+    this.events.emit('buyer:updated', this.getData());
   }
 
   validate(): TValidationErrors {
@@ -69,11 +69,6 @@ export class BuyerDetails {
       if (!this.email.trim()) {
         errors.email = 'Укажите емэйл';
       }
-
-      this.events.emit('buyer:validated', { 
-        isValid: Object.keys(errors).length === 0,
-        errors 
-      });
         
       return errors;
     }

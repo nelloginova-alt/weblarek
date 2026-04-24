@@ -2,6 +2,7 @@ import { Card, ICard } from './card';
 import { IEvents } from '../base/Events';
 import { ensureElement } from '../../utils/utils';
 import { categoryMap } from '../../utils/constants';
+import { CDN_URL } from '../../utils/constants';
 
 interface ICardPreview extends ICard {
     image: string;
@@ -15,8 +16,8 @@ export class CardPreview extends Card<ICardPreview> {
     protected descriptionElement: HTMLElement;
     protected buttonElement: HTMLButtonElement;
 
-    constructor(events: IEvents, container: HTMLElement) {
-        super(events, container);
+    constructor(protected events: IEvents, container: HTMLElement) {
+        super(container);
 
         this.imageElement = ensureElement<HTMLImageElement>('.card__image', this.container);
         this.categoryElement = ensureElement<HTMLElement>('.card__category', this.container);
@@ -30,12 +31,14 @@ export class CardPreview extends Card<ICardPreview> {
     }
 
     set image(value: string) {
-        this.setImage(this.imageElement, value, this.titleElement.textContent);
+       const fullImagePath = CDN_URL + value;
+        this.setImage(this.imageElement, fullImagePath, this.title);
     }
 
     set category(value: string) {
         this.categoryElement.textContent = String(value);
-        this.categoryElement.className = `card__category_${categoryMap}`;
+        const categoryClass = categoryMap[value as keyof typeof categoryMap] || 'other';
+        this.categoryElement.className = `card__category card__category_${categoryClass}`;
     }
 
     set description(value: string) {
@@ -44,5 +47,9 @@ export class CardPreview extends Card<ICardPreview> {
 
     set buttonText(value: string) {
         this.buttonElement.textContent = String(value);
+    }
+
+    set id(value: string) {
+        this.container.dataset.id = value;
     }
 }

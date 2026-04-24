@@ -31,4 +31,12 @@ export class Basket extends Component<IBasket> {
     set totalPrice(value: number) {
         this.totalPriceElement.textContent = `${value} синапсов`;
     }
+
+    set buttonDisabled(value: boolean) {
+        if (value) {
+            this.buttonElement.setAttribute('disabled', 'disabled');
+        } else {
+            this.buttonElement.removeAttribute('disabled');
+        }
+    }
 }

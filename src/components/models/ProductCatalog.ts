@@ -23,7 +23,7 @@ export class ProductCatalog {
   setProductDetails(product: IProduct): void {
     if (product) {
       this.productDetails = product;
-      this.events.emit('catalog:details-selected');
+      this.events.emit('catalog:details-selected', { id: product.id });
     } else {
       this.productDetails = null;
       this.events.emit('catalog:details-cleared');

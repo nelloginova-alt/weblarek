@@ -24,21 +24,10 @@ export class Form<T extends IForm> extends Component<T> {
     }
 
     set valid(value: boolean) {
-        if (value) {
-            this.submitButton.removeAttribute;
-        } else {
-            this.submitButton.setAttribute;
-        }
+        this.submitButton.disabled = !value;
     }
 
     set errors(value: string) {
         this.errorElement.textContent = String(value);
-    }
-
-    render(data?: Partial<T>): HTMLElement {
-        if (data) {
-            Object.assign(this as object, data);
-        }
-        return this.container;
     }
 }

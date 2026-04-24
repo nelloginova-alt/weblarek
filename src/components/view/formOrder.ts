@@ -28,6 +28,7 @@ export class FormOrder extends Form<IFormOrder> {
         });
 
         this.addressInput.addEventListener('input', () => {
+            console.log('Ввод адреса:', this.addressInput.value);
             this.events.emit('order:address', { address: this.addressInput.value });
         });
     }
