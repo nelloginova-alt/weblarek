@@ -1,5 +1,5 @@
 import { IEvents } from '../base/Events';
-import { ensureElement, cloneTemplate } from '../../utils/utils';
+import { ensureElement}  from '../../utils/utils';
 import { Component } from '../base/Component';
 
 interface IBasket {

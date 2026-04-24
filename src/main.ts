@@ -20,7 +20,6 @@ import { FormOrder } from './components/view/formOrder';
 import { FormContacts } from './components/view/formContacts';
 import { Success } from './components/view/success';
 
-import {IProduct} from './types/index';
 import { cloneTemplate, ensureElement } from './utils/utils';
 
 const events = new EventEmitter();
