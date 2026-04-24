@@ -1,15 +1,37 @@
 import {IBuyer, TPayment, TValidationErrors} from '../../types/index';
+import { IEvents } from '../base/Events';
+
 export class BuyerDetails {
   private payment: TPayment = '';
   private address: string = '';
   private phone: string = '';
   private email: string = '';
 
+  constructor(protected events: IEvents) {}
+
   updateData(data: Partial<IBuyer>): void {
-    if (data.payment !== undefined) this.payment = data.payment;
-    if (data.address !== undefined) this.address = data.address;
-    if (data.phone !== undefined) this.phone = data.phone;
-    if (data.email !== undefined) this.email = data.email;
+    let hasChanges = false;
+
+    if (data.payment !== undefined) {
+      this.payment = data.payment;
+      hasChanges = true;
+    }
+    if (data.address !== undefined) {
+      this.address = data.address;
+      hasChanges = true;
+    }
+    if (data.phone !== undefined) {
+      this.phone = data.phone;
+      hasChanges = true;
+    }
+    if (data.email !== undefined) {
+      this.email = data.email;
+      hasChanges = true;
+    }
+    if(hasChanges) {
+      this.events.emit('buyer:updated', this.getData());
+      this.validate();
+    }
   }
     
   getData(): IBuyer {
@@ -26,6 +48,7 @@ export class BuyerDetails {
     this.address = '';
     this.phone = '';
     this.email = '';
+    this.events.emit('buyer:cleared');
   }
 
   validate(): TValidationErrors {
@@ -46,7 +69,17 @@ export class BuyerDetails {
       if (!this.email.trim()) {
         errors.email = 'Укажите емэйл';
       }
+
+      this.events.emit('buyer:validated', { 
+        isValid: Object.keys(errors).length === 0,
+        errors 
+      });
         
       return errors;
     }
+
+    validateField(field: keyof IBuyer): boolean {
+    const errors = this.validate();
+    return !errors[field];
+  }
 }
