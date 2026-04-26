@@ -37,19 +37,26 @@ export class CardPreview extends Card<ICardPreview> {
 
     set category(value: string) {
         this.categoryElement.textContent = String(value);
-        const categoryClass = categoryMap[value as keyof typeof categoryMap] || 'other';
-        this.categoryElement.className = `card__category card__category_${categoryClass}`;
+        const categoryClassName = categoryMap[value as keyof typeof categoryMap] || 'card__category_other';
+        this.categoryElement.className = `card__category ${categoryClassName}`;
     }
 
     set description(value: string) {
         this.descriptionElement.textContent = String(value);
     }
 
-    set buttonText(value: string) {
-        this.buttonElement.textContent = String(value);
+    set price(value: number | null) {
+        if (value === null) {
+            this.priceElement.textContent = 'Недоступно';
+            this.buttonElement.disabled = true;
+            this.buttonElement.textContent = 'Недоступно';
+        } else {
+            this.priceElement.textContent = `${value} синапсов`;
+            this.buttonElement.disabled = false;
+        }
     }
 
-    set id(value: string) {
-        this.container.dataset.id = value;
+    set buttonText(value: string) {
+        this.buttonElement.textContent = String(value);
     }
 }

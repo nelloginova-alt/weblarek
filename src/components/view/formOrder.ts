@@ -31,6 +31,12 @@ export class FormOrder extends Form<IFormOrder> {
             console.log('Ввод адреса:', this.addressInput.value);
             this.events.emit('order:address', { address: this.addressInput.value });
         });
+
+        this.container.addEventListener('submit', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.events.emit('order:submit');
+        });
     }
 
     set payment(value: 'card' | 'cash' | null) {

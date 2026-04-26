@@ -47,13 +47,31 @@ const orderForm = new FormOrder(events, cloneTemplate(templates.order));
 const contactsForm = new FormContacts(events, cloneTemplate(templates.contacts));
 const success = new Success(events, cloneTemplate(templates.success));
 
-let currentBasket: Basket | null = basket;
-let currentPreviewCard: CardPreview | null = null;
-let currentPreviewCardId: string | null = null;
-
 const productsModel = new ProductCatalog(events);
 const basketModel = new ProductBasket(events);
 const buyerModel = new BuyerDetails(events);
+
+let currentPreviewCard: CardPreview | null = null;
+
+function validateOrderForm(): boolean {
+  const { payment, address } = buyerModel.getData();
+  const isValid = payment !== '' && address.trim() !== '';
+    
+  orderForm.valid = isValid;
+  orderForm.errors = (payment !== '' && address.trim() === '') ? 'Необходимо указать адрес' : '';
+    
+  return isValid;
+}
+
+function validateContactsForm(): boolean {
+  const { email, phone } = buyerModel.getData();
+  const isValid = email.trim() !== '' && phone.trim() !== '';
+    
+  contactsForm.valid = isValid;
+  contactsForm.errors = '';
+    
+  return isValid;
+}
 
 const api = new Api(API_URL);
 const dataApi = new DataApi(api);
@@ -61,11 +79,10 @@ const dataApi = new DataApi(api);
 events.on('catalog:updated', () => {
   const cards = productsModel.getProducts().map(product => {
     const cardContainer = cloneTemplate(templates.catalog);
-    const card = new CardCatalog(cardContainer, (id: string) => {
-      events.emit('card:select', { id });
+    const card = new CardCatalog(cardContainer, () => {
+      events.emit('card:select', { id: product.id  });
     });
-        
-    card.id = product.id;
+
     card.title = product.title;
     card.price = product.price;
     card.category = product.category;
@@ -90,38 +107,39 @@ events.on('card:select', (data: { id: string }) => {
 events.on('catalog:details-selected', (data: { id: string }) => {
   const product = productsModel.getProductById(data.id);
   if (!product) return;
-    
-  const cardContainer = cloneTemplate(templates.preview);
-  const card = new CardPreview(events, cardContainer);
-  currentPreviewCard = card;
-  currentPreviewCardId = product.id;
-    
-  card.id = product.id;
-  card.title = product.title;
-  card.price = product.price ?? null;
-  card.category = product.category;
-  card.image = product.image;
-  card.description = product.description || '';
-    
-  if (basketModel.hasProductSelected(product.id)) {
-    card.buttonText = 'Удалить';
+
+  if (!currentPreviewCard) {
+    const cardContainer = cloneTemplate(templates.preview);
+    currentPreviewCard = new CardPreview(events, cardContainer);
   }
     
-  modal.content = card.render();
+  currentPreviewCard.title = product.title;
+  currentPreviewCard.price = product.price ?? null;
+  currentPreviewCard.category = product.category;
+  currentPreviewCard.image = product.image;
+  currentPreviewCard.description = product.description || '';
+    
+  if (basketModel.hasProductSelected(product.id)) {
+    currentPreviewCard.buttonText = 'Удалить';
+  }
+    
+  modal.content = currentPreviewCard.render();
   modal.open();
 });
 
 events.on('card:toggle', () => {
-  if (!currentPreviewCard || !currentPreviewCardId) return;
+  if (!currentPreviewCard) return;
     
-  const id = currentPreviewCardId;
+   const product = productsModel.getProductDetails();
+  if (!product) return;
+    
+  const id = product.id;
     
   if (basketModel.hasProductSelected(id)) {
     basketModel.removeProductSelected(id);
     currentPreviewCard.buttonText = 'Купить';
   } else {
-    const product = productsModel.getProductById(id);
-    if (product) basketModel.addProductSelected(product);
+    basketModel.addProductSelected(product);
     currentPreviewCard.buttonText = 'Удалить';
   }
 });
@@ -132,13 +150,8 @@ events.on('buyer:updated', (data: IBuyer) => {
   contactsForm.email = data.email;
   contactsForm.phone = data.phone;
 
-  const errors = buyerModel.validate();
-  const isValid = Object.keys(errors).length === 0;
-    
-  orderForm.valid = isValid;
-  orderForm.errors = errors.address || errors.payment || ''; 
-  contactsForm.valid = isValid;
-  contactsForm.errors = errors.email || errors.phone || '';
+  validateOrderForm();
+  validateContactsForm();
 })
 
 events.on('order:payment', (data: { payment: 'card' | 'cash' }) => buyerModel.updateData({ payment: data.payment }));
@@ -149,11 +162,10 @@ events.on('contacts:phone', (data: { phone: string }) => buyerModel.updateData({
 function updateBasketContent(basket: Basket): void {
   const items = basketModel.getProductsSelected().map((item, idx) => {
     const cardContainer = cloneTemplate(templates.basketItem);
-    const card = new CardBasket(cardContainer, (id: string) => {
-      events.emit('basket:remove', { id });
+    const card = new CardBasket(cardContainer, () => {
+      events.emit('basket:remove', { id: item.id  });
     });
         
-    card.id = item.id;
     card.title = item.title;
     card.price = item.price;
     card.index = idx + 1;
@@ -204,12 +216,12 @@ events.on('form:submit', async () => {
   };
 
   try {
-    await dataApi.postOrder(orderData);
+    const response = await dataApi.postOrder(orderData);
         
     basketModel.clear();
     buyerModel.clear();
 
-    success.description = `Списано ${orderData.total} синапсов`;
+    success.description = `Списано ${response.total} синапсов`;
     modal.content = success.render();
   } catch (err) {
     orderForm.errors = 'Ошибка при оформлении заказа. Попробуйте снова.';
@@ -222,6 +234,4 @@ events.on('success:close', () => {
 
 events.on('modal:close', () => {
   currentPreviewCard = null;
-  currentPreviewCardId = null;
-  currentBasket = null;
 });
