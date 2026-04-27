@@ -53,26 +53,6 @@ const buyerModel = new BuyerDetails(events);
 
 let currentPreviewCard: CardPreview | null = null;
 
-function validateOrderForm(): boolean {
-  const { payment, address } = buyerModel.getData();
-  const isValid = payment !== '' && address.trim() !== '';
-    
-  orderForm.valid = isValid;
-  orderForm.errors = (payment !== '' && address.trim() === '') ? 'Необходимо указать адрес' : '';
-    
-  return isValid;
-}
-
-function validateContactsForm(): boolean {
-  const { email, phone } = buyerModel.getData();
-  const isValid = email.trim() !== '' && phone.trim() !== '';
-    
-  contactsForm.valid = isValid;
-  contactsForm.errors = '';
-    
-  return isValid;
-}
-
 const api = new Api(API_URL);
 const dataApi = new DataApi(api);
 
@@ -150,8 +130,15 @@ events.on('buyer:updated', (data: IBuyer) => {
   contactsForm.email = data.email;
   contactsForm.phone = data.phone;
 
-  validateOrderForm();
-  validateContactsForm();
+  const errors = buyerModel.validate();
+  
+  const orderErrors = [errors.address, errors.payment].filter(Boolean).join('; ');
+  orderForm.valid = orderErrors.length === 0;
+  orderForm.errors = orderErrors;
+
+  const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
+  contactsForm.valid = contactsErrors.length === 0;
+  contactsForm.errors = contactsErrors;
 })
 
 events.on('order:payment', (data: { payment: 'card' | 'cash' }) => buyerModel.updateData({ payment: data.payment }));
